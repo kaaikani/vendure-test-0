@@ -1,0 +1,9 @@
+node_modules
+dist
+!dist/compile-admin-ui.js
+!dist/vendure-config.js
+!dist/smsService.js 
+static/assets
+static/email/test-emails
+admin-ui/.angular/cache.env
+.env.example

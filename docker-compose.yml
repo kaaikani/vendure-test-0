@@ -1,0 +1,52 @@
+version: "3"
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    command: ["yarn", "start:server"]
+    volumes:
+      - /usr/src/app
+    environment:
+      DB_TYPE: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: wow_vendure
+      DB_USERNAME: root
+      DB_PASSWORD: 1234
+    depends_on:
+      - mysql
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["yarn", "start:worker"]
+    volumes:
+      - .:/usr/src/app
+
+    environment:
+      DB_TYPE: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: wow_vendure
+      DB_USERNAME: root
+      DB_PASSWORD: 1234
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0.42
+    container_name: mysql_vendure
+    ports:
+      - "3307:3306"  # Host:Container
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: wow_vendure
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
