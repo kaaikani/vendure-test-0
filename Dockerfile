@@ -2,25 +2,25 @@
 FROM node:20 AS builder
 WORKDIR /app
 
-
 # Copy package files first to leverage Docker cache
 COPY package*.json ./
 COPY package-lock.json ./
 
-# Install dependencies with specific flags for better caching
+# Install dependencies
 RUN npm ci --prefer-offline --no-audit
 
-# Copy source code
+# Copy the rest of the source code
 COPY . .
 
-# Build the application
+# Build the Vendure server and Admin UI
 RUN npm run build
+RUN npm run build:admin
 
 # Production stage
 FROM node:20-slim AS production
 WORKDIR /app
 
-# Install production dependencies and tools for health checks
+# Install tools for health checks
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
@@ -30,11 +30,14 @@ RUN apt-get update && \
 # Install PM2 globally
 RUN npm install -g pm2
 
-# Copy built application and dependencies
+# Copy built application, dependencies, and static assets
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/static ./static
+
+# ✅ Copy Admin UI files
+COPY --from=builder /app/admin-ui ./admin-ui
 
 # Create PM2 ecosystem file
 RUN echo '{\
@@ -52,13 +55,13 @@ RUN echo '{\
     ]\
     }' > ecosystem.config.json
 
-# Expose ports for server and worker
+# Expose necessary ports
 EXPOSE 80
 EXPOSE 8080
 
-# Health check
+# Health check endpoint
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:80/health || exit 1
 
-# Use PM2 to run both processes
+# Run app with PM2
 CMD ["pm2-runtime", "ecosystem.config.json"]
