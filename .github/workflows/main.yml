@@ -34,15 +34,21 @@ jobs:
           cd admin-ui
           npm install
           npm run build
-      - name: 📦 Build, tag, and push Docker image
+      - name: 📥 Install DockerSlim
+        run: |
+          curl -sL https://raw.githubusercontent.com/docker-slim/docker-slim/master/scripts/install-dockerslim.sh | sudo bash
+
+      - name: 📦 Build, slim, tag, and push Docker image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
         run: |
           IMAGE_TAG=${{ github.sha }}
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG .
+          docker-slim build --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
       - name: 📋 Download and sanitize ECS task definition
         run: |
           aws ecs describe-task-definition \
