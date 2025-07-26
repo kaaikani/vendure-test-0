@@ -1,29 +1,24 @@
-#534mb image
 # Build stage
 FROM node:20-alpine AS builder
 WORKDIR /app
+
 COPY package*.json ./
-RUN npm ci --prefer-offline --no-audit
+RUN npm ci --omit=dev
+
 COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
 WORKDIR /app
 
-RUN apk add --no-cache curl
+# Install only production dependencies
+COPY package*.json ./
+RUN npm ci --omit=dev
 
+# Copy built app from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
-
-RUN npm ci --only=production --prefer-offline --no-audit \
- && npm prune --production \
- && npm cache clean --force \
- && rm -rf /root/.npm /root/.cache
-
-EXPOSE 80 8080
-
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:80/health || exit 1
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
 
 CMD ["node", "dist/index.js"]
