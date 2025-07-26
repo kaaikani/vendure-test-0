@@ -46,9 +46,15 @@ jobs:
         run: |
           IMAGE_TAG=${{ github.sha }}
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG .
-          docker-slim build --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG --target $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG
+          
+          docker-slim build \
+            --http-probe=false \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            --target $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG
+      
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
 
       - name: 📋 Download and sanitize ECS task definition
         run: |
