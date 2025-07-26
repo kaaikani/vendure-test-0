@@ -1,24 +1,23 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:20 AS builder
 WORKDIR /app
 
+# Install dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
+# Copy source files
 COPY . .
+
+# Build your app (if needed)
 RUN npm run build
 
 # Production stage
 FROM node:20-slim AS production
 WORKDIR /app
 
-# Install only production dependencies
-COPY package*.json ./
-RUN npm ci --omit=dev
+# Copy only what's needed from the builder stage
+COPY --from=builder /app ./
 
-# Copy built app from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-
+# Set entrypoint
 CMD ["node", "dist/index.js"]
