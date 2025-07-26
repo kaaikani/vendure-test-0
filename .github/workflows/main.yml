@@ -34,10 +34,11 @@ jobs:
           cd admin-ui
           npm install
           npm run build
-      - name: 📥 Install DockerSlim
+      - name: Install DockerSlim
         run: |
-          curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
-
+          curl -sL https://downloads.dockerslim.com/releases/1.40.5/dist_linux.tar.gz | tar -xz
+          sudo mv dist_linux/docker-slim /usr/local/bin/docker-slim
+          docker-slim --version
 
       - name: 📦 Build, slim, tag, and push Docker image
         env:
