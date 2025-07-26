@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - b1
+
 jobs:
   deploy:
     name: Build & Deploy to ECS
@@ -26,7 +27,7 @@ jobs:
       - name: 🐳 Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-    
+
       - name: 🔨 Install dependencies and build Admin UI
         run: |
           npm install
@@ -34,25 +35,25 @@ jobs:
           cd admin-ui
           npm install
           npm run build
+
+      - name: 📥 Install DockerSlim (official script)
+        run: |
+          curl -sL https://raw.githubusercontent.com/slimtoolkit/slim/master/scripts/install-slim.sh | sudo -E bash -
+          docker-slim --version
+
       - name: 📦 Build, slim, tag, and push Docker image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
         run: |
           IMAGE_TAG=${{ github.sha }}
-      
-          # Build raw image
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG .
-      
-          # Slim the image, and explicitly keep `node`
+
           docker-slim build \
             --http-probe=false \
-            --include-bin node \
-            --exec "node -v" \
             --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             --target $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG
-      
-          # Push slimmed image to ECR
+
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
@@ -74,10 +75,12 @@ jobs:
               cpu,
               memory
             }' > task-def.json
+
       - name: 📝 Update container image in task definition
         run: |
           IMAGE="${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}"
           jq --arg IMAGE "$IMAGE" '.containerDefinitions[0].image = $IMAGE' task-def.json > task-def-updated.json
+
       - name: 🚀 Register new ECS task definition
         id: register-task
         run: |
@@ -85,6 +88,7 @@ jobs:
             --cli-input-json file://task-def-updated.json \
             --query 'taskDefinition.taskDefinitionArn' --output text)
           echo "task_definition_arn=$TASK_REVISION" >> $GITHUB_OUTPUT
+
       - name: 🔁 Update ECS service with new task
         run: |
           aws ecs update-service \
