@@ -55,10 +55,12 @@ jobs:
           docker-slim build \
             --http-probe=false \
             --include-bin node \
-            --include-path /app/dist/index.js \
+            --include-path /app/dist \
+            --include-path /app/node_modules/iconv-lite/encodings \
             --exec "node dist/index.js" \
             --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             --target $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG
+
 
       
           # Push slimmed image to ECR
