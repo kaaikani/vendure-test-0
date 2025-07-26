@@ -55,9 +55,11 @@ jobs:
           docker-slim build \
             --http-probe=false \
             --include-bin node \
-            --exec "node -v" \
+            --include-path /app/dist/index.js \
+            --exec "node dist/index.js" \
             --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
             --target $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG
+
       
           # Push slimmed image to ECR
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
