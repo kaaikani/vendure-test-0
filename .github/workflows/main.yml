@@ -34,15 +34,26 @@ jobs:
           cd admin-ui
           npm install
           npm run build
-      - name: 📦 Build, tag, and push Docker image
+      - name: 📦 Build, slim, tag, and push Docker image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
         run: |
           IMAGE_TAG=${{ github.sha }}
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+
+          # Build the original image
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG .
+
+          # Slim the image (remove --target)
+          docker-slim build \
+            --http-probe=false \
+            --tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            $ECR_REGISTRY/$ECR_REPOSITORY:raw-$IMAGE_TAG
+
+          # Push slimmed image
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
       - name: 📋 Download and sanitize ECS task definition
         run: |
           aws ecs describe-task-definition \
