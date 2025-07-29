@@ -1,5 +1,3 @@
-this is my workflow:
-
 name: CI/CD to AWS ECS
 
 on:
