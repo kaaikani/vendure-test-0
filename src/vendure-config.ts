@@ -46,7 +46,7 @@ const IS_DEV = process.env.APP_ENV === 'dev';
 export const config: VendureConfig = {
   // logger: new DefaultLogger({ level: LogLevel.Verbose }),
   apiOptions: {
-    port: 3000,
+    port: 80,
     adminApiPath: 'admin-api',
     shopApiPath: 'shop-api',
     adminListQueryLimit:2000,
@@ -197,7 +197,7 @@ export const config: VendureConfig = {
       },
     }),
     AdminUiPlugin.init({
-      port: 3000,
+      port: 8080,
       app: {
         path: path.join(__dirname, '../admin-ui/dist'),
       },
