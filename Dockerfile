@@ -23,6 +23,9 @@ RUN npm prune --production
 # Remove build dependencies and caches
 RUN rm -rf /root/.npm /var/cache/apk/*
 
+# After build steps in builder stage
+RUN mkdir -p /app/static/email/templates/partials
+
 # Stage 2: Create the final image using distroless
 FROM gcr.io/distroless/nodejs20
 WORKDIR /app
@@ -31,6 +34,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/admin-ui/dist ./admin-ui/dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/static /app/static
 
 # Expose ports
 EXPOSE 3000 3001
