@@ -20,20 +20,11 @@ RUN npm run build && npm run build:admin
 # Prune to production dependencies only
 RUN npm prune --production --omit=optional,peer
 
-# Ultra-aggressive node_modules cleaning
+# Safe node_modules cleaning (only remove clearly unnecessary files)
 RUN find /app/node_modules -type d \( -name "test" -o -name "tests" -o -name "__tests__" -o -name "docs" -o -name "examples" -o -name "coverage" -o -name ".nyc_output" -o -name "spec" -o -name "specs" -o -name "demo" -o -name "samples" \) -exec rm -rf {} + 2>/dev/null || true
-RUN find /app/node_modules -type f \( -name "*.md" -o -name "*.ts" -o -name "*.tsx" -o -name "*.map" -o -name "*.spec.*" -o -name "*.test.*" -o -name "CHANGELOG*" -o -name "LICENSE*" -o -name "README*" -o -name "*.d.ts.map" -o -name "*.js.map" -o -name "*.min.js.map" \) -delete
+RUN find /app/node_modules -type f \( -name "*.md" -o -name "*.ts" -o -name "*.tsx" -o -name "*.spec.*" -o -name "*.test.*" -o -name "CHANGELOG*" -o -name "LICENSE*" -o -name "README*" -o -name "*.d.ts.map" -o -name "*.js.map" -o -name "*.min.js.map" \) -delete
 RUN find /app/node_modules -name "*.log" -delete
 RUN find /app/node_modules -name ".git*" -exec rm -rf {} + 2>/dev/null || true
-
-# Remove heavy AWS SDK modules
-RUN rm -rf /app/node_modules/@aws-sdk/client-s3/dist-es /app/node_modules/@aws-sdk/lib-storage/dist-es 2>/dev/null || true
-RUN rm -rf /app/node_modules/@aws-sdk/client-s3/dist-types /app/node_modules/@aws-sdk/lib-storage/dist-types 2>/dev/null || true
-
-# Remove unnecessary files from heavy packages
-RUN find /app/node_modules -name "*.min.js" -not -name "*.min.js" -delete 2>/dev/null || true
-RUN find /app/node_modules -name "*.bundle.js" -delete 2>/dev/null || true
-RUN find /app/node_modules -name "*.umd.js" -delete 2>/dev/null || true
 
 # Remove build dependencies and caches
 RUN rm -rf /root/.npm /var/cache/apk/*
